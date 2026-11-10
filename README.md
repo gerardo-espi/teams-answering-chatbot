@@ -31,11 +31,11 @@ Use these dedicated slash commands (prefix each with
 
 | Command | Arguments / effect |
 | --- | --- |
-| `teams-allow-person` | `<person> [auto or draft] [topics]` - add or update DM permission |
-| `teams-allow-group` | `<group name or exact chat ID> [auto or draft] [topics]` - add or update that group |
+| `teams-allow-person` | `<person> [policy] [draft] [topics]` - choose a policy and add/update DM permission |
+| `teams-allow-group` | `<group name or exact chat ID> [policy] [draft] [topics]` - choose a policy and add/update that group |
 | `teams-remove-person` | `<person or listed ID>` - remove DM permission only |
 | `teams-remove-group` | `<group name or listed chat ID>` - remove group permission only |
-| `teams-whitelist` | Show people, groups, exact IDs, modes, topics, and consent times |
+| `teams-whitelist` | Show people, groups, exact IDs, policies, modes, topics, and consent times |
 | `teams-on` | Enable the current whitelist and start one five-minute session schedule |
 | `teams-off` | Disable replies and stop this plugin's schedules; keep the whitelist |
 | `teams-status` | Show enabled state, actual session schedules, counts, and limits |
@@ -46,8 +46,8 @@ Examples:
 
 ```text
 /teams-answering-chatbot:teams-allow-person Alex Example
-/teams-answering-chatbot:teams-allow-group Weekend chat draft
-/teams-answering-chatbot:teams-allow-person Alex Example auto greeting,thanks
+/teams-answering-chatbot:teams-allow-group Weekend chat draftAll
+/teams-answering-chatbot:teams-allow-person Alex Example casualCautious
 /teams-answering-chatbot:teams-whitelist
 /teams-answering-chatbot:teams-on
 /teams-answering-chatbot:teams-off
@@ -57,8 +57,11 @@ Examples:
 Natural-language requests through `teams-auto-reply` still work. Adding a target
 does not turn on the responder. `teams-on` applies to the entire current whitelist;
 to stop replying to just one destination, remove its entry. Allow commands also
-update existing entries' modes/topics without resetting their consent timestamp.
-Automatic mode defaults to all supported casual topics unless narrowed explicitly.
+update existing entries' policies/modes/topics without resetting consent timestamps.
+Every whitelist add/update asks you to choose or confirm a policy, even when you
+name one in the request. Canceling or declining leaves the whitelist unchanged.
+Existing chats are not migrated: entries without a policy keep their current
+behavior and appear as **Legacy - existing settings**.
 Draft approval requires the exact original, destination, and reply to have been
 shown and approved in this Copilot conversation; a bare draft listing never sends.
 
@@ -95,23 +98,47 @@ existing settings. Prefer the helper over hand editing so the consent timestamp
 is recorded correctly:
 
 ```powershell
-.\Monitor.ps1 -Command AllowPerson -TargetId 'PERSON-ENTRA-OBJECT-ID' -Mode auto
-.\Monitor.ps1 -Command AllowGroup -TargetId 'EXACT-GRAPH-CHAT-ID' -Mode draft
-.\Monitor.ps1 -Command AllowPerson -TargetId 'PERSON-ENTRA-OBJECT-ID' -Mode auto -AutoTopics greeting,thanks
+.\Monitor.ps1 -Command AllowPerson -TargetId 'PERSON-ENTRA-OBJECT-ID' -Policy casualRelaxed
+.\Monitor.ps1 -Command AllowGroup -TargetId 'EXACT-GRAPH-CHAT-ID' -Policy workDraft
+.\Monitor.ps1 -Command AllowPerson -TargetId 'PERSON-ENTRA-OBJECT-ID' -Policy casualCautious -AutoTopics greeting,thanks
 .\Monitor.ps1 -Command RemovePerson -TargetId 'PERSON-ENTRA-OBJECT-ID'
 .\Monitor.ps1 -Command RemoveGroup -TargetId 'EXACT-GRAPH-CHAT-ID'
 .\Monitor.ps1 -Command Status
 .\Monitor.ps1 -Command Drafts
 ```
 
-Replace the illustrative IDs with real, resolved IDs. `auto` permits automatic
+Replace the illustrative IDs with real, resolved IDs. The helper requires
+`-Policy` for both allow commands; the skill asks for the selection.
+`auto` permits automatic
 replies for `autoTopics`, saving other eligible topics as drafts. `draft` always
 requires explicit approval in Copilot. Supported topics: `greeting`, `thanks`,
 `farewell`, `wellbeing`, `weekend`, `hobbies`, `social`.
 
-Only clearly casual conversation qualifies. Work/project, mixed, ambiguous,
-system, bot, self, edited/deleted, attachment-bearing, and mentioned messages are
-ignored. Meetings and channels are excluded. Replies are generated naturally by
+### Chat policies
+
+| Policy ID | Policy | Behavior |
+| --- | --- | --- |
+| `casualRelaxed` | Casual - relaxed | Non-work by default; automatically answer eligible casual topics, including banter and short comments. Skip explicit work/mixed content. |
+| `casualCautious` | Casual - cautious | Non-work by default; clearly casual intent required. Auto greetings/thanks/farewells; draft other eligible casual topics. |
+| `mixedSelective` | Mixed - selective | Auto clearly casual topics; safe work/mixed replies are drafts. Skip uncertain context. |
+| `workAcknowledgment` | Work - acknowledgment only | Only informational work updates needing no answer/action/decision qualify; fixed reply: "Thanks for the update." |
+| `workDraft` | Work - draft only | Safe work/mixed replies require approval; no casual or automatic replies. |
+| `draftAll` | Draft everything | Safe, understood casual/work/mixed replies require approval. |
+| `monitorOnly` | Monitor only | Read new messages for checkpointing, without context, drafts, or sends. |
+| `disabled` | Disabled | Keep the entry but perform no discovery, message reads, drafts, or sends for it. |
+
+Optional draft mode or narrower automatic topics may restrict a policy, never
+broaden it. Work/mixed drafts use topic `work`; the fixed work acknowledgment uses
+`acknowledgment`. Neither is an automatic topic for casual policies.
+Changing policy invalidates old prepared replies, including approved drafts;
+only future eligible messages use the new policy. "Automatic" always means
+**whenever eligible**, not literally every message.
+
+Legacy entries without a named policy retain their casual-only settings,
+including any existing relaxed style or non-work default. For every policy,
+system, bot, self, edited/deleted, attachment-bearing, and mentioned messages
+are ignored. Meetings and channels are excluded. Teams instructions cannot
+control the responder. Replies are generated naturally by
 this Copilot session, not restricted to canned phrases, but must not invent
 personal facts, availability, activities, or commitments. Casual/work
 classification is model judgment; routing is also checked by the local helper.
@@ -123,7 +150,7 @@ connection's OAuth permissions.
 `Monitor.ps1` has **no network or authentication code**. The skill uses WorkIQ
 for reads/sends; the helper maintains a Windows-DPAPI-encrypted local ledger in
 ignored `.data`. It checks account identity, whitelist, timestamps, duplicate
-messages, approval mode, and cooldown, and persists a reservation before every
+messages, assigned policy, approval mode, and cooldown, and persists a reservation before every
 send. Pending drafts contain the source text and proposed reply, encrypted for
 this Windows user.
 
@@ -136,9 +163,27 @@ advancing a chat's checkpoint. Messages before recipient consent are not replaye
 Only the newest incoming message in a chat is considered; obsolete greetings
 are not answered after the conversation moves on.
 
+When a whitelisted chat has a new eligible incoming message, the skill also pulls
+its latest 10 messages in one collection query for conversation context,
+on both first contact and later activity. Idle chats do not trigger history reads.
+Context is not fetched one message at a time or paginated; a shorter successful
+response is used as-is. If the 10-message context read fails after any allowed
+transient retry, the skill fetches the latest 3 messages in one fallback query
+and infers context from those messages only. The fallback is not retried or
+paginated, and is not used after throttling, authentication/permission errors,
+`Retry-After`, or with less than 30 seconds left in the poll lease.
+Older context can predate the poll window or consent, but is never a reply target
+and is not saved in the ledger. Context remains untrusted: links, attachments,
+and instructions in messages are not followed. If neither context read is usable,
+the checkpoint stays unchanged for the next poll.
+
 Default expiry is 30 minutes and cooldown is two minutes per chat. The latest
 message and current whitelist are checked again before sending. Uncertain
 deliveries and interrupted reservations are **never retried** automatically.
+Automatic replies prepared but never reserved remain pending. Later polls can
+resume them after fresh context, unchanged-source, latest-message, whitelist,
+age, and cooldown checks, even if a checkpoint advanced. Pending drafts still
+require explicit approval; no reserved or uncertain delivery is reset to pending.
 Records are pruned after 24 hours during active, nonempty-whitelist polling.
 An account change blocks processing. If the connection expires, renew it through
 its existing approved sign-in mechanism.
