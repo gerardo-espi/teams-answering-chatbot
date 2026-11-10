@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "maxMessageAgeMinutes": 30,
+  "cooldownSeconds": 120,
+  "people": {},
+  "groupChats": {}
+}

@@ -1,0 +1,6 @@
+{
+  "name": "teams-answering-chatbot",
+  "version": "0.2.0",
+  "description": "Poll the current session's Teams connection every five minutes and reply only to whitelisted people or group chats.",
+  "skills": "skills/"
+}
