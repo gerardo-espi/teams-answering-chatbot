@@ -15,6 +15,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# Keep emoji and non-ASCII reply text intact over piped stdin/stdout.
+[Console]::InputEncoding = [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $script:Topics = @('greeting', 'thanks', 'farewell', 'wellbeing', 'weekend', 'hobbies', 'social')
 $script:Policies = @{
     casualRelaxed = @{ mode = 'auto'; autoTopics = $script:Topics; conversationStyle = 'relaxedCasual'; conversationContext = 'nonWorkDefault' }
