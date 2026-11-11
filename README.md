@@ -1,6 +1,6 @@
 # Teams answering Copilot plugin
 
-Every **five minutes**, this plugin uses the running Copilot session's **existing
+Every **five minutes** on weekdays 9 AM–5 PM (every 30 minutes otherwise), this plugin uses the running Copilot session's **existing
 WorkIQ Teams connection** to check new messages and answer as you, only in
 whitelisted destinations. No app registration, separate sign-in, client secret,
 bot account, Node.js server, or Windows scheduled task is needed.
@@ -36,7 +36,7 @@ Use these dedicated slash commands (prefix each with
 | `teams-remove-person` | `<person or listed ID>` - remove DM permission only |
 | `teams-remove-group` | `<group name or listed chat ID>` - remove group permission only |
 | `teams-whitelist` | Show people, groups, exact IDs, policies, modes, topics, and consent times |
-| `teams-on` | Enable the current whitelist and start one five-minute session schedule |
+| `teams-on` | Enable the current whitelist and start the work-hours/off-hours session schedules |
 | `teams-off` | Disable replies and stop this plugin's schedules; keep the whitelist |
 | `teams-status` | Show enabled state, actual session schedules, counts, and limits |
 | `teams-drafts` | List drafts; `approve <draft ID>` or `dismiss <draft ID>` explicitly |
@@ -71,7 +71,7 @@ require separate entries. A whitelisted group's human members can all trigger
 replies in that group. Non-whitelisted messages are left untouched.
 
 The skill is `skills\teams-auto-reply\SKILL.md`. Its start action creates one
-five-minute recurring prompt in the current session; each prompt reads the skill
+set of recurring prompts (5 min work hours, 30 min otherwise) in the current session; each prompt reads the skill
 and performs one bounded poll. It does not create another Copilot process.
 The session must remain running, connected, and the machine awake.
 Start again in a new session; schedules are not an independent persistent service.

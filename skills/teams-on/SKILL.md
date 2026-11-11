@@ -1,6 +1,6 @@
 ---
 name: teams-on
-description: Turn on Teams casual auto-replies and start one five-minute poll schedule for the current whitelist.
+description: Turn on Teams casual auto-replies and start the poll schedules (5 min weekdays 9-5, 30 min otherwise) for the current whitelist.
 ---
 
 # Turn replies on
@@ -9,7 +9,7 @@ Read `..\teams-auto-reply\SKILL.md` relative to this skill directory before acti
 Apply its safety rules and explicit start procedure in Start / stop / status.
 Resolve this plugin's absolute root from this skill's location.
 
-Enable the responder and reuse or create exactly one five-minute session schedule
+Enable the responder and reuse or create the three poll session schedules from Start / stop / status
 for this plugin root. The schedule must read the absolute main
 `skills\teams-auto-reply\SKILL.md` and execute only Poll once, not this command.
 Never add whitelist entries as part of starting. If the whitelist is empty, state

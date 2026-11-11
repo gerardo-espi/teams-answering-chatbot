@@ -1,6 +1,6 @@
 ---
 name: teams-auto-reply
-description: Poll Teams every five minutes under per-chat policies, or configure the responder and whitelist with a required policy choice.
+description: Poll Teams every 5 min in work hours (30 min otherwise) under per-chat policies, or configure the responder and whitelist with a required policy choice.
 ---
 
 # Teams auto-reply
@@ -12,7 +12,8 @@ belong in this plugin. The plugin root is two directories above this skill.
 Resolve that absolute Windows path from the loaded skill's location; all commands
 below refer to its `Monitor.ps1` and `config.json`.
 
-The user authorized polling every **five minutes** and answering as themselves
+The user authorized polling every **five minutes** on weekdays 9 AM–5 PM local
+time and every **30 minutes** at other times (weekends are off-hours), and answering as themselves
 only in explicitly whitelisted destinations. Person entries authorize only
 one-to-one DMs. A group requires its own exact chat ID, regardless of its members.
 Non-whitelisted messages must not be replied to, marked read, reacted to, edited,
@@ -124,7 +125,7 @@ applies to sends, reservations, or uncertain deliveries.
    `/me/chats?$expand=lastMessagePreview&$orderby=lastMessagePreview/createdDateTime desc&$select=id,chatType&$top=50`.
    Do not expand members here. Candidates are chats whose
    `lastMessagePreview.createdDateTime` is newer than the oldest checkpoint
-   (Plan's `since`; if unknown, the last 10 minutes) and whose preview sender is
+   (Plan's `since`; if unknown, the last 35 minutes so off-hours gaps are covered) and whose preview sender is
    not self, and which are either an exact whitelisted group ID with
    `chatType: group`, or `oneOnOne` chats whose ID contains a whitelisted person
    ID. Follow the next link only while the last returned preview is still newer
@@ -287,9 +288,11 @@ resets it.
 ## Start / stop / status
 
 On explicit start: run `Enable`, then inspect existing session schedules using
-`manage_schedule list`. Reuse an existing five-minute schedule pointing at this
-exact plugin root; never create duplicates. Otherwise create interval `5m` with
-a prompt containing the **absolute path of this SKILL.md** and instructing the
+`manage_schedule list`. Reuse existing schedules pointing at this exact plugin
+root when they match the set below; never create duplicates. Otherwise stop
+this root's stale schedules and create these three cron schedules (host local
+time): `*/5 9-16 * * 1-5` (work hours), `*/30 0-8,17-23 * * 1-5` (weekday
+off-hours), and `*/30 * * * 0,6` (weekends). Each uses a prompt containing the **absolute path of this SKILL.md** and instructing the
 agent to read it and execute only the Poll section once. Do not schedule another
 Copilot process, a workflow, a Windows task, or a separately authenticated daemon.
 

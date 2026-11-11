@@ -1,6 +1,6 @@
 {
   "name": "teams-answering-chatbot",
-  "version": "0.3.0",
-  "description": "Poll Teams every five minutes with per-chat reply policies, contextual replies, and safe pending-reply recovery.",
+  "version": "0.3.1",
+  "description": "Poll Teams every 5 min in work hours (30 min otherwise) with per-chat reply policies, contextual replies, and safe pending-reply recovery.",
   "skills": "skills/"
 }

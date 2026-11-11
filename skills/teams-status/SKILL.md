@@ -10,7 +10,7 @@ Apply its safety rules and status procedure in Start / stop / status.
 Resolve this plugin's absolute root from this skill's location.
 
 Run `Monitor.ps1 -Command Status` and list session schedules. Report enabled or
-disabled, whether a five-minute schedule exists for this exact plugin root,
+disabled, whether the work-hours/off-hours poll schedules exist for this exact plugin root,
 person/group counts, maximum message age, and cooldown. Enabled configuration
 alone does not mean polling is running; identify a missing schedule or duplicates
 without changing them. Do not poll, send, fetch Teams data, or repair state.
